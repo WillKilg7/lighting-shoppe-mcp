@@ -1,0 +1,32 @@
+LIGHTING SHOPPE MCP — RAILWAY ENVIRONMENT VARIABLES
+=====================================================
+Copy these exactly into Railway → Your Service → Variables
+
+MCP_BEARER_TOKEN=37b4764c6e8e3a2641ef0b12385895168031946e854fe2b5c16b8874bd18f097
+
+SHOPIFY_CLIENT_ID=        ← paste from Shopify Partner Dashboard
+SHOPIFY_CLIENT_SECRET=    ← paste from Shopify Partner Dashboard
+SHOPIFY_SCOPES=read_products,read_inventory,read_orders
+SHOPIFY_SHOP=tzr7sd-ii.myshopify.com
+HOST=                     ← paste your Railway app URL once deployed (e.g. https://lighting-shoppe-mcp-production.up.railway.app)
+PORT=3000
+NODE_ENV=production
+SESSION_SECRET=           ← generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+=====================================================
+AFTER DEPLOYING TO RAILWAY:
+1. Copy your Railway app URL (e.g. https://lighting-shoppe-mcp-production.up.railway.app)
+2. Paste it into:
+   - Railway Variables → HOST (without trailing slash)
+   - Shopify Partner Dashboard → App setup → App URL
+   - Shopify Partner Dashboard → App setup → Allowed redirection URLs
+     (append /auth/callback: https://your-app.up.railway.app/auth/callback)
+   - Claude Desktop config at:
+     C:\Users\jack.LIGHTINGSHOPPE\AppData\Roaming\Claude\claude_desktop_config.json
+     (replace REPLACE-WITH-YOUR-RAILWAY-URL with your real Railway subdomain)
+
+=====================================================
+SECURITY NOTE:
+Delete or shred this file once you have entered all values into Railway.
+Do NOT commit this file to GitHub.
+=====================================================
