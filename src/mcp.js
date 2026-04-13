@@ -336,6 +336,11 @@ function formatInventory(product) {
     lines.push(`  Overall Quantity: ${v.inventoryQuantity !== null ? v.inventoryQuantity : 'N/A'}`);
     lines.push(`  Available for Sale: ${v.availableForSale ? 'Yes' : 'No'}`);
 
+    const unitCost = v.inventoryItem?.unitCost;
+    if (unitCost?.amount) {
+      lines.push(`  Cost: $${parseFloat(unitCost.amount).toFixed(2)} ${unitCost.currencyCode}`);
+    }
+
     const levels = v.inventoryItem?.inventoryLevels?.edges || [];
     if (levels.length > 0) {
       lines.push('  By Location:');
@@ -381,6 +386,17 @@ function formatPricing(product) {
 
     lines.push(`**${opts}**`);
     lines.push(`  Price: $${price} ${currency}${compareAt}`);
+
+    const unitCost = v.inventoryItem?.unitCost;
+    if (unitCost?.amount) {
+      const cost = parseFloat(unitCost.amount);
+      const retail = parseFloat(v.price);
+      const margin = retail > 0 ? (((retail - cost) / retail) * 100).toFixed(1) : null;
+      const markup = cost > 0 ? (((retail - cost) / cost) * 100).toFixed(1) : null;
+      lines.push(`  Cost: $${cost.toFixed(2)} ${unitCost.currencyCode}`);
+      if (margin !== null) lines.push(`  Margin: ${margin}%  |  Markup: ${markup}%`);
+    }
+
     if (v.sku) lines.push(`  SKU: ${v.sku}`);
     lines.push(`  Taxable: ${v.taxable ? 'Yes' : 'No'}`);
     lines.push(`  Available: ${v.availableForSale ? 'Yes' : 'No'}`);

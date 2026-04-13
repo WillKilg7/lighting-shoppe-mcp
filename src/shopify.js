@@ -88,6 +88,12 @@ export class ShopifyClient {
                       name
                       value
                     }
+                    inventoryItem {
+                      unitCost {
+                        amount
+                        currencyCode
+                      }
+                    }
                   }
                 }
               }
@@ -141,6 +147,10 @@ export class ShopifyClient {
                 inventoryItem {
                   id
                   tracked
+                  unitCost {
+                    amount
+                    currencyCode
+                  }
                   inventoryLevels(first: 10) {
                     edges {
                       node {
@@ -218,6 +228,12 @@ export class ShopifyClient {
                   name
                   value
                 }
+                inventoryItem {
+                  unitCost {
+                    amount
+                    currencyCode
+                  }
+                }
               }
             }
           }
@@ -262,6 +278,12 @@ export class ShopifyClient {
                 selectedOptions {
                   name
                   value
+                }
+                inventoryItem {
+                  unitCost {
+                    amount
+                    currencyCode
+                  }
                 }
               }
             }
