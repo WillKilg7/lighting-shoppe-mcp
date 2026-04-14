@@ -37,13 +37,8 @@ import {
   validateShopParam,
 } from './middleware.js';
 
-import {
-  generateAuthUrl,
-  handleCallback,
-  isInstalled,
-  revokeToken,
-  validateWebhookHmac,
-} from './auth.js';
+import { generateAuthUrl, handleCallback, isInstalled, revokeToken, validateWebhookHmac, getAccessToken } from './auth.js';
+import { ShopifyClient } from './shopify.js';
 
 import { createMCPServer, SSEServerTransport } from './mcp.js';
 
@@ -293,7 +288,54 @@ app.post('/messages', bearerAuth, async (req, res) => {
     res.status(500).json({ error: 'Internal server error.' });
   }
 });
+// ─── REST Search API ──────────────────────────────────────────────────────────
+// Simple HTTP endpoint so external tools can query Shopify without SSE.
+// GET /api/search?q=QUERY&limit=5   — keyword/SKU/brand search
+// GET /api/search?handle=HANDLE     — fetch single product by URL handle
+// Protected by the same Bearer token as /sse.
+app.get('/api/search', bearerAuth, async (req, res) => {
+  const accessToken = getAccessToken(SHOP);
+  if (!accessToken) {
+    return res.status(503).json({ error: 'Shopify not connected. Visit /auth to install.' });
+  }
+  const { q, handle, limit: limitParam } = req.query;
+  const limit = Math.min(parseInt(limitParam || '5', 10), 10);
+  if (!q && !handle) {
+    return res.status(400).json({ error: 'Provide q (search query) or handle (product handle).' });
+  }
+  try {
+    const client = new ShopifyClient(SHOP, accessToken);
+    if (handle) {
+      const data = await client.getProductByHandle(handle.toString());
+      const p = data?.productByHandle;
+      return res.json({ products: p ? [fmt(p)] : [] });
+    }
+    const data = await client.searchProducts(q.toString(), limit);
+    const products = (data?.products?.edges || []).map(e => fmt(e.node));
+    res.json({ products, total: products.length });
+  } catch (err) {
+    console.error('[api/search] error:', err.message);
+    res.status(500).json({ error: 'Search failed.' });
+  }
+});
 
+function fmt(p) {
+  return {
+    id: p.id, title: p.title, handle: p.handle,
+    url: `https://thelightingshoppe.ca/products/${p.handle}`,
+    vendor: p.vendor, productType: p.productType,
+    totalInventory: p.totalInventory,
+    priceMin: p.priceRangeV2?.minVariantPrice?.amount,
+    priceMax: p.priceRangeV2?.maxVariantPrice?.amount,
+    currency: p.priceRangeV2?.minVariantPrice?.currencyCode,
+    image: p.images?.edges?.[0]?.node?.url || null,
+    variants: (p.variants?.edges || []).map(e => ({
+      sku: e.node.sku, title: e.node.title,
+      price: e.node.price, compareAtPrice: e.node.compareAtPrice,
+      inventory: e.node.inventoryQuantity, available: e.node.availableForSale,
+    })),
+  };
+}
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found.' });
